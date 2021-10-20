@@ -3,10 +3,15 @@ from web3 import Web3
 import pandas
 from time import time
 
+CURRENT_TIME = int(time())
+
 def integrate(times):
-    currentTime = int(time())
+    """
+    Returns the seconds of staked times for an array of alternating deposit
+    and withdrawal times for a token.
+    """
     if len(times) == 1:
-        return currentTime - times[0]
+        return CURRENT_TIME - times[0]
     elif len(times)%2 == 0:
         s = 0
         for i in range(0, len(times), 2):
@@ -109,27 +114,3 @@ df2 = pandas.DataFrame.from_dict(addr_tokens_sorted, orient='index')
 with open("StakedTokens.md", "w") as f:
     f.write(df2.to_markdown())
 print("Brrrrrrrrrrr done!")
-
-# print("Getting staked tokens")
-
-# PART TWO
-"""
-
-# Get every address that interacted with the contract and tokens currently staked
-# Skip first transaction because it's the deployment 
-addr_dict = {data["result"][i]["from"]: 0 for i in range(1, len(data["result"]))}
-total = len(addr_dict)
-for i, addr in enumerate(addr_dict.keys()):
-    print(f"{i+1}/{total}", end="\r")
-    addr_dict[addr] = contract.functions.getNumberOfStakedTokens(Web3.toChecksumAddress(addr), "0xc92d06C74A26AeAf4d1A1273FAC171f3B09FAC79").call()
-print("Got all staked tokens")
-
-addr_dict_sorted = {k: v for k, v in sorted(addr_dict.items(), key=lambda item: item[1], reverse=True) if v != 0}
-
-df = pandas.DataFrame.from_dict(addr_dict_sorted, orient='index')
-
-print("Writing to StakedTokens.md")
-with open("StakedTokens.md", "w") as f:
-    f.write(df.to_markdown())
-print("Brrrrrrrrrrr done!")
-"""

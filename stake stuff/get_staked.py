@@ -3,6 +3,7 @@ from web3 import Web3
 import pandas
 from time import time
 
+# print("Using Unix TimeSamp:", int(time()))
 CURRENT_TIME = int(time())
 
 def integrate(times):
@@ -66,6 +67,7 @@ for i in range(1, len(data["result"])):
             token_events[token].append(timeStamp)
             if not addr_token_events.get(addr):
                 addr_token_events.update({addr: {}})
+            # This is so not computationally efficient but ask me if I care
             addr_token_events[addr].update({token: token_events[token]})
     else:
         # print(d[1]["tokenID"])
@@ -75,7 +77,7 @@ for i in range(1, len(data["result"])):
         addr_token_events[addr].update({token: token_events[function_input[1]["tokenID"]]})
 
 integrated_times = {k: 0 for k in addr_token_events}
-# print("UNIX TIME NOW:", int(time()))
+
 for addr, v in addr_token_events.items():
     # print(addr, v)
     for times in v.values():

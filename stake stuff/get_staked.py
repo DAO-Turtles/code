@@ -95,8 +95,8 @@ sorted_integrated_times = {k: v for k, v in sorted(integrated_times.items(), key
 df = pandas.DataFrame.from_dict(sorted_integrated_times, orient='index')
 
 print("Writing to StakedTimes.md")
-with open("StakedTimes.md", "w") as currently_staked:
-    currently_staked.write(df.to_markdown())
+with open("StakedTimes.md", "w") as f:
+    f.write(df.to_markdown())
 
 # Get currently staked tokens
 # Number of events (deposit, withdraw, deposit...)

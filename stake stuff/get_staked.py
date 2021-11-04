@@ -63,6 +63,10 @@ for i in range(1, len(data["result"])):
         print("*error tx from:", data["result"][i]["from"])
         continue
     function_input = contract.decode_function_input(data["result"][i]["input"])
+    nftContract = function_input[1]["tokenContract"]
+    if nftContract != "0xc92d06C74A26AeAf4d1A1273FAC171f3B09FAC79":
+        print("Skipping deposited nft:", contract)
+        continue
     timeStamp = data["result"][i]["timeStamp"]
     addr = data["result"][i]["from"]
     event = str(function_input[0])  # function

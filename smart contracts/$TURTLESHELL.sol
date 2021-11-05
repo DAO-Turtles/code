@@ -1,60 +1,62 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
 
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SignatureProver {
-   
     function getMessageHash(
-        address _to,
-        uint _amount,
-        uint _nonce
+        address to,
+        uint256 amount,
+        uint256 nonce
     ) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_to, _amount, _nonce));
+        return keccak256(abi.encodePacked(to, amount, nonce));
     }
 
-    function getEthSignedMessageHash(bytes32 _messageHash)
+    function getEthSignedMessageHash(bytes32 messageHash)
         public
         pure
         returns (bytes32)
     {
-        /*
-        Signature is produced by signing a keccak256 hash with the following format:
-        "\x19Ethereum Signed Message\n" + len(msg) + msg
-        */
+        
+        // Signature is produced by signing a keccak256 hash with the following format:
+        // "\x19Ethereum Signed Message\n" + len(msg) + msg
+        
         return
             keccak256(
-                abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageHash)
+                abi.encodePacked(
+                    "\x19Ethereum Signed Message:\n32",
+                    messageHash
+                )
             );
     }
 
     function verify(
-        address _signer,
-        address _to,
-        uint _amount,
-        uint _nonce,
-        bytes memory signature
+        address signer,
+        address to,
+        uint256 amount,
+        uint256 nonce,
+        bytes calldata signature
     ) public pure returns (bool) {
-        bytes32 messageHash = getMessageHash(_to, _amount, _nonce);
+        bytes32 messageHash = getMessageHash(to, amount, nonce);
         bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
 
-        return recoverSigner(ethSignedMessageHash, signature) == _signer;
+        return recoverSigner(ethSignedMessageHash, signature) == signer;
     }
 
-    function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature)
+    function recoverSigner(bytes32 ethSignedMessageHash, bytes memory signature)
         public
         pure
         returns (address)
     {
-        (bytes32 r, bytes32 s, uint8 v) = splitSignature(_signature);
+        (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature);
 
-        return ecrecover(_ethSignedMessageHash, v, r, s);
+        return ecrecover(ethSignedMessageHash, v, r, s);
     }
 
-    function splitSignature(bytes memory sig)
-        public
+    function splitSignature(bytes memory signature)
+        private
         pure
         returns (
             bytes32 r,
@@ -62,7 +64,7 @@ contract SignatureProver {
             uint8 v
         )
     {
-        require(sig.length == 65, "Invalid signature length");
+        require(signature.length == 65, "Invalid signature length");
 
         assembly {
             /*
@@ -75,45 +77,51 @@ contract SignatureProver {
             */
 
             // first 32 bytes, after the length prefix
-            r := mload(add(sig, 32))
+            r := mload(add(signature, 32))
             // second 32 bytes
-            s := mload(add(sig, 64))
+            s := mload(add(signature, 64))
             // final byte (first byte of the next 32 bytes)
-            v := byte(0, mload(add(sig, 96)))
+            v := byte(0, mload(add(signature, 96)))
         }
 
         // implicitly return (r, s, v)
     }
-
 }
 
-
 contract $TURTLESHELL is ERC20, Ownable, SignatureProver {
-   
-    mapping (address => uint256) public nonceMap;
-    mapping (address => uint256) public claimedTokens;
-   
+    mapping(address => uint256) public nonceMap;
+    mapping(address => uint256) public claimedTokens;
+
     constructor() ERC20("$TURTLESHELL", "TRTL") {
-        _mint(msg.sender, 420 * 10 ** decimals());
+        _mint(msg.sender, 420690000000000000000);
     }
-   
-    function claimTokens(uint256 amount, uint256 nonce, bytes memory signature) public {
-        require(verify(owner(), msg.sender, amount, nonce, signature), "Invalid signature");
-       
+
+    function claimTokens(
+        uint256 amount,
+        uint256 nonce,
+        bytes calldata signature
+    ) external {
+        require(
+            verify(owner(), msg.sender, amount, nonce, signature),
+            "Invalid signature"
+        );
+
         // Current nonce has to match this one to avoid double-claiming
         require(nonceMap[msg.sender] == nonce, "Invalid nonce");
-       
+
         _mint(msg.sender, amount);
-       
+
         nonceMap[msg.sender]++;
         claimedTokens[msg.sender] += amount;
     }
 
-    function sendTokens(uint256 amount, address[] calldata beneficiaries) public onlyOwner {
-        for (uint256 i = 0; i< beneficiaries.length; i++){
+    function sendTokens(uint256 amount, address[] calldata beneficiaries)
+        external
+        onlyOwner
+    {
+        for (uint256 i = 0; i < beneficiaries.length; i++) {
             address beneficiary = beneficiaries[i];
             _mint(beneficiary, amount);
         }
-    }    
-
+    }
 }
